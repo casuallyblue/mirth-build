@@ -1,0 +1,124 @@
+module(mirth-build.main)
+
+import(std.prelude)
+import(std.str)
+import(std.byte)
+import(std.path)
+import(std.maybe)
+import(std.list)
+
+import(posix.posix)
+
+import(ini-parser.parser)
+
+import(mirth-build.options)
+
+data(Error,
+    UnknownKey -> Str,
+    MissingKey,
+    MissingValue)
+
+data(PackageData,
+    PackageData -> 
+        name:Str 
+	c-source:Maybe(Path)
+	dependencies:List(PackageData) 
+	bin:Maybe(Str))
+
+data(PackageDataBuilder,
+    PackageDataBuilder -> 
+        name:Maybe(Str) 
+	c-source:Maybe(Path)
+	dependencies:List(PackageData) 
+	bin:Maybe(Str))
+
+def(PackageDataBuilder.new, -- PackageDataBuilder,
+    NONE >name L0 >dependencies NONE >c-source NONE >bin PackageDataBuilder.PackageDataBuilder)
+
+def(meta-parsefn, 
+    data:PackageDataBuilder 
+    name:Maybe(Str)
+    value:Maybe(Str)
+    --
+    data:PackageDataBuilder
+    error:Maybe(mirth-build.main.Error),
+
+    name> match(
+        SOME -> dup "name" == if(
+	    drop value> data> name! >data NONE, 
+	    dup "c-source" == if(
+	        drop value> map(>Path) data> c-source! >data NONE,
+		UnknownKey SOME value> drop
+	    )
+	),
+	NONE -> value> drop NONE
+    ) >error
+)
+
+def-external(run_git, Ptr Ptr --)
+
+def(pull-git-source, dir:Str url:Str -- Path,
+    "build" >Path
+    dir> >Path join dup >Str url> with-data-cstr(swap with-data-cstr(run_git)))
+
+def(do-dependency, name:Str value:Str data:PackageDataBuilder -- data:PackageDataBuilder error:Maybe(mirth-build.main.Error),
+    name> dup >dir value> >url pull-git-source
+
+    drop2
+    NONE >error
+)
+
+def(dependencies-parsefn, 
+    data:PackageDataBuilder 
+    name:Maybe(Str)
+    value:Maybe(Str)
+    --
+    data:PackageDataBuilder
+    error:Maybe(mirth-build.main.Error),
+    
+    name> match(
+        SOME -> >name 
+	value> match(
+	    SOME -> >value do-dependency,
+	    NONE -> name> drop mirth-build.main.Error.MissingValue SOME >error
+	),
+	NONE -> value> drop NONE >error
+    ))
+
+def(bin-parsefn, 
+    data:PackageDataBuilder 
+    name:Maybe(Str)
+    value:Maybe(Str)
+    --
+    data:PackageDataBuilder
+    error:Maybe(mirth-build.main.Error),
+
+    name> drop value> drop NONE >error)
+
+
+
+def(package-parsefn, 
+    data:PackageDataBuilder 
+    section:Maybe(Str) 
+    name:Maybe(Str) 
+    value:Maybe(Str) 
+    -- 
+    data:PackageDataBuilder 
+    error:Maybe(mirth-build.main.Error),
+
+    section> match (
+        SOME -> 
+	  dup "package" == if(
+	      meta-parsefn, 
+	      dup "dependencies" == if(
+	          dependencies-parsefn,
+		  dup "bin" == if(
+		      bin-parsefn,
+		      name> drop value> drop
+		      NONE >error))) drop,
+	NONE -> name> drop value> drop NONE >error))
+
+def(main, +World -- +World,
+    parse-args drop
+    "mirth-build.ini" >Path PackageDataBuilder.new ini-parse(package-parsefn) drop drop 
+)

@@ -1,0 +1,37 @@
+module(mirth-build.options)
+
+import(std.prelude)
+import(std.list)
+import(std.maybe)
+
+import(posix.posix)
+
+import(args.types)
+import(args.parse)
+import(args.state)
+
+data(Options,
+    Options ->
+        command:Maybe(Str))
+
+def(Options.default, -- Options,
+    NONE >command
+
+    Options.Options)
+
+def(args-parse-fn, +ArgumentParser(a) a Maybe(Str) ArgpOptionType -- +ArgumentParser(a) a,
+    drop2
+)
+
+def(parse-args, +World -- +World Options,
+    Options.default
+
+    LIST() >options
+    [ args-parse-fn ] SOME >parser
+    "[command]" SOME >args-doc
+    "Mirth Build Tool" >doc
+    ArgumentParser
+
+    args.parse.parse-args match(
+        RIGHT -> ,
+	LEFT -> show panic!))
