@@ -12,28 +12,12 @@ import(posix.posix)
 import(ini-parser.parser)
 
 import(mirth-build.options)
+import(mirth-build.package-data)
 
 data(Error,
     UnknownKey -> Str,
     MissingKey,
     MissingValue)
-
-data(PackageData,
-    PackageData -> 
-        name:Str 
-	c-source:Maybe(Path)
-	dependencies:List(PackageData) 
-	bin:Maybe(Str))
-
-data(PackageDataBuilder,
-    PackageDataBuilder -> 
-        name:Maybe(Str) 
-	c-source:Maybe(Path)
-	dependencies:List(PackageData) 
-	bin:Maybe(Str))
-
-def(PackageDataBuilder.new, -- PackageDataBuilder,
-    NONE >name L0 >dependencies NONE >c-source NONE >bin PackageDataBuilder.PackageDataBuilder)
 
 def(meta-parsefn, 
     data:PackageDataBuilder 
@@ -64,7 +48,16 @@ def(pull-git-source, dir:Str url:Str -- Path,
 def(do-dependency, name:Str value:Str data:PackageDataBuilder -- data:PackageDataBuilder error:Maybe(mirth-build.main.Error),
     name> dup >dir value> >url pull-git-source
 
-    drop2
+    data> dependencies(
+        dip(
+	    "src" >Path join >path >name
+	    NONE >c-source
+	    L0 >dependencies
+	    L0 >bin 
+	    PackageData.PackageData
+	) cons
+    ) >data
+
     NONE >error
 )
 
@@ -93,7 +86,11 @@ def(bin-parsefn,
     data:PackageDataBuilder
     error:Maybe(mirth-build.main.Error),
 
-    name> drop value> drop NONE >error)
+    name> match(
+        SOME -> value> match(
+	    SOME -> pack2 data> bin:cons >data NONE >error,
+	    NONE -> drop mirth-build.main.Error.MissingValue SOME >error),
+	NONE -> value> drop NONE >error))
 
 
 
@@ -118,7 +115,26 @@ def(package-parsefn,
 		      NONE >error))) drop,
 	NONE -> name> drop value> drop NONE >error))
 
+def(make-cli-package-arg, PackageData -- Str, \(package ->
+    Str(" -p " ; package name ; ":" ; package path >Str ;)))
+
+def(make-bin-arg, [Str Str] -- Str, 
+    unpack2 >source >bin
+    Str(" -o bin/" ; bin> ; ".c " ; source> ;)
+)
+
+def-external(system, Ptr --)
+
 def(main, +World -- +World,
     parse-args drop
-    "mirth-build.ini" >Path PackageDataBuilder.new ini-parse(package-parsefn) drop drop 
+    "mirth-build.ini" >Path PackageDataBuilder.new path(drop "src" >Path SOME) ini-parse(package-parsefn) drop  
+    build match(
+        LEFT -> show panic!,
+	RIGHT -> \(package ->
+	    Str("mirth" ; 
+	    package dependencies map(make-cli-package-arg) 
+	    fold(cat) match(SOME -> , NONE -> "") ;
+	    package make-cli-package-arg ; package bin first unwrap make-bin-arg ;) with-data-cstr(system)
+	)
+    )
 )

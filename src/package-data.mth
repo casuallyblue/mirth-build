@@ -1,0 +1,48 @@
+module(mirth-build.package-data)
+
+import(std.prelude)
+import(std.path)
+import(std.str)
+import(std.maybe)
+import(std.list)
+import(std.either)
+
+data(Error,
+    MissingPath,
+    MissingName)
+
+def(Error.show, Error -- Str, 
+    MissingPath -> "Missing Path",
+    MissingName -> "Missing Name")
+
+data(PackageData,
+    PackageData -> 
+        name:Str 
+	path:Path
+	c-source:Maybe(Path)
+	dependencies:List(PackageData) 
+	bin:List([Str Str]))
+
+data(PackageDataBuilder,
+    PackageDataBuilder -> 
+        name:Maybe(Str) 
+	path:Maybe(Path)
+	c-source:Maybe(Path)
+	dependencies:List(PackageData) 
+	bin:List([Str Str]))
+
+def(PackageDataBuilder.new, -- PackageDataBuilder,
+    NONE >name L0 >dependencies NONE >path NONE >c-source L0 >bin PackageDataBuilder.PackageDataBuilder)
+
+def(PackageDataBuilder.build, PackageDataBuilder -- Either(Error, PackageData),
+    \(builder ->
+        builder name match(
+            NONE -> MissingName LEFT,
+	    SOME -> drop builder path match(
+	        NONE -> MissingPath LEFT,
+	        SOME -> drop builder /PackageDataBuilder 
+		    name> unwrap >name path> unwrap >path PackageData.PackageData RIGHT
+	    )
+        ) 
+    )
+)
