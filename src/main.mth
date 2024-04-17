@@ -39,11 +39,17 @@ def(meta-parsefn,
     ) >error
 )
 
-def-external(run_git, Ptr Ptr --)
+def-external(path_exists, Ptr -- Bool)
+
+def(path-exists?, Path -- Bool,
+    >Str with-data-cstr(path_exists))
 
 def(pull-git-source, dir:Str url:Str -- Path,
     "build" >Path
-    dir> >Path join dup >Str url> with-data-cstr(swap with-data-cstr(run_git)))
+    dir> >Path join dup path-exists? not if(
+        dup >Str url> Str("git clone " ; ; " " ; ;) run-program drop,	
+	url> drop
+    ))
 
 def(do-dependency, name:Str value:Str data:PackageDataBuilder -- data:PackageDataBuilder error:Maybe(mirth-build.main.Error),
     name> dup >dir value> >url pull-git-source
@@ -118,12 +124,24 @@ def(package-parsefn,
 def(make-cli-package-arg, PackageData -- Str, \(package ->
     Str(" -p " ; package name ; ":" ; package path >Str ;)))
 
-def(make-bin-arg, [Str Str] -- Str, 
+def(make-bin-mirth-arg, [Str Str] -- Str, 
     unpack2 >source >bin
-    Str(" -o bin/" ; bin> ; ".c " ; source> ;)
-)
+    Str("-o bin/" ; bin> ; ".c" ; " " ; source> ;))
 
-def-external(system, Ptr --)
+def(make-bin-gcc-arg, [Str Str] -- Str,
+    unpack2 drop dup 
+    Str("-o bin/" ; ; " bin/" ; ; ".c" ;))
+
+def-external(system, Ptr -- Int)
+def(run-program, Str -- Int,
+    with-data-cstr(system))
+
+def(build-mirth-bin-csrc, packages:Str bin:[Str Str] --,
+    Str("mirth" ; packages> ; " " ; bin> make-bin-mirth-arg ;) dup print-ln! run-program drop)
+
+def(build-mirth-bin-gcc, c-source:Str bin:[Str Str] --,
+    Str("gcc" ; " " ; c-source> ; " " ; bin> make-bin-gcc-arg ;) dup print-ln! run-program drop
+)
 
 def(main, +World -- +World,
     parse-args drop
@@ -131,10 +149,12 @@ def(main, +World -- +World,
     build match(
         LEFT -> show panic!,
 	RIGHT -> \(package ->
-	    Str("mirth" ; 
-	    package dependencies map(make-cli-package-arg) 
-	    fold(cat) match(SOME -> , NONE -> "") ;
-	    package make-cli-package-arg ; package bin first unwrap make-bin-arg ;) with-data-cstr(system)
+	    package dependencies map(make-cli-package-arg) fold(cat) unwrap-or("") package make-cli-package-arg cat
+
+	    package bin for(>bin dup >packages build-mirth-bin-csrc) drop
+
+	    package c-source map(>Str) unwrap-or("")
+	    package bin for(>bin dup >c-source build-mirth-bin-gcc) drop
 	)
     )
 )
