@@ -1,15 +1,15 @@
 [submodule "lib/std"]
 	path = lib/std
-	url = git@git.casuallyblue.dev:mirth/std
+	url = https://git.casuallyblue.dev/mirth/std
 [submodule "lib/ansi"]
 	path = lib/ansi
-	url = git@git.casuallyblue.dev:mirth/ansi
+	url = https://git.casuallyblue.dev/mirth/ansi
 [submodule "lib/args"]
 	path = lib/args
-	url = git@git.casuallyblue.dev:mirth/args
+	url = https://git.casuallyblue.dev/mirth/args
 [submodule "lib/ini-parser"]
 	path = lib/ini-parser
-	url = git@git.casuallyblue.dev:mirth/ini-parser
+	url = https://git.casuallyblue.dev/mirth/ini-parser
 [submodule "lib/posix"]
 	path = lib/posix
-	url = git@git.casuallyblue.dev:mirth/posix
+	url = https://git.casuallyblue.dev/mirth/posix
