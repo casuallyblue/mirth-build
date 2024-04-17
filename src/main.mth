@@ -6,6 +6,7 @@ import(std.byte)
 import(std.path)
 import(std.maybe)
 import(std.list)
+import(std.either)
 
 import(posix.posix)
 
@@ -39,14 +40,19 @@ def(meta-parsefn,
     ) >error
 )
 
-def-external(path_exists, Ptr -- Bool)
+def-external(dir_exists, Ptr -- Bool)
 
-def(path-exists?, Path -- Bool,
-    >Str with-data-cstr(path_exists))
+def(dir-exists?, Path -- Bool,
+    >Str with-data-cstr(dir_exists))
+
+def-external(file_exists, Ptr -- Bool)
+
+def(file-exists?, Path -- Bool,
+    >Str with-data-cstr(file_exists))
 
 def(pull-git-source, dir:Str url:Str -- Path,
     "build" >Path
-    dir> >Path join dup path-exists? not if(
+    dir> >Path join dup dir-exists? not if(
         dup >Str url> Str("git clone " ; ; " " ; ;) run-program drop,	
 	url> drop
     ))

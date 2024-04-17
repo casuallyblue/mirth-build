@@ -3,6 +3,7 @@ module(mirth-build.options)
 import(std.prelude)
 import(std.list)
 import(std.maybe)
+import(std.either)
 
 import(posix.posix)
 
