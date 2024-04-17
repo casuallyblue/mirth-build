@@ -15,11 +15,16 @@ def(Error.show, Error -- Str,
     MissingPath -> "Missing Path",
     MissingName -> "Missing Name")
 
+data(GCCFlags,
+    GCCFlags ->
+        linker-flags:Maybe(Str)
+	compiler-flags:Maybe(Str))
+
 data(PackageData,
     PackageData -> 
         name:Str 
 	path:Path
-	c-source:Maybe(Path)
+	c:GCCFlags
 	dependencies:List(PackageData) 
 	bin:List([Str Str]))
 
@@ -27,12 +32,19 @@ data(PackageDataBuilder,
     PackageDataBuilder -> 
         name:Maybe(Str) 
 	path:Maybe(Path)
-	c-source:Maybe(Path)
+	c:GCCFlags
 	dependencies:List(PackageData) 
 	bin:List([Str Str]))
 
 def(PackageDataBuilder.new, -- PackageDataBuilder,
-    NONE >name L0 >dependencies NONE >path NONE >c-source L0 >bin PackageDataBuilder.PackageDataBuilder)
+    NONE >name 
+    L0 >dependencies 
+    NONE >path 
+        NONE >linker-flags
+	NONE >compiler-flags
+    GCCFlags.GCCFlags >c
+    L0 >bin 
+    PackageDataBuilder.PackageDataBuilder)
 
 def(PackageDataBuilder.build, PackageDataBuilder -- Either(Error, PackageData),
     \(builder ->

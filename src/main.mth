@@ -31,10 +31,7 @@ def(meta-parsefn,
     name> match(
         SOME -> dup "name" == if(
 	    drop value> data> name! >data NONE, 
-	    dup "c-source" == if(
-	        drop value> map(>Path) data> c-source! >data NONE,
-		UnknownKey SOME value> drop
-	    )
+	    UnknownKey SOME value> drop 
 	),
 	NONE -> value> drop NONE
     ) >error
@@ -63,7 +60,9 @@ def(do-dependency, name:Str value:Str data:PackageDataBuilder -- data:PackageDat
     data> dependencies(
         dip(
 	    "src" >Path join >path >name
-	    NONE >c-source
+	        NONE >compiler-flags
+		NONE >linker-flags
+	    GCCFlags.GCCFlags >c
 	    L0 >dependencies
 	    L0 >bin 
 	    PackageData.PackageData
@@ -104,8 +103,6 @@ def(bin-parsefn,
 	    NONE -> drop mirth-build.main.Error.MissingValue SOME >error),
 	NONE -> value> drop NONE >error))
 
-
-
 def(package-parsefn, 
     data:PackageDataBuilder 
     section:Maybe(Str) 
@@ -123,9 +120,31 @@ def(package-parsefn,
 	          dependencies-parsefn,
 		  dup "bin" == if(
 		      bin-parsefn,
-		      name> drop value> drop
-		      NONE >error))) drop,
+		      dup "c" == if(
+		          c-parsefn,
+			  name> drop value> drop
+		          NONE >error)))) drop,
 	NONE -> name> drop value> drop NONE >error))
+
+def(c-parsefn, 
+    data:PackageDataBuilder 
+    name:Maybe(Str)
+    value:Maybe(Str)
+    --
+    data:PackageDataBuilder
+    error:Maybe(mirth-build.main.Error),
+
+    name> match(
+        SOME -> dup "linker-flags" == if(
+	    drop value> ^data:c:linker-flags! NONE, 
+	    dup "compiler-flags" == if(
+	        drop value> ^data:c:compiler-flags! NONE,
+		UnknownKey SOME value> drop
+	    )
+	),
+	NONE -> value> drop NONE
+    ) >error
+)
 
 def(make-cli-package-arg, PackageData -- Str, \(package ->
     Str(" -p " ; package name ; ":" ; package path >Str ;)))
@@ -145,8 +164,8 @@ def(run-program, Str -- Int,
 def(build-mirth-bin-csrc, packages:Str bin:[Str Str] --,
     Str("mirth" ; packages> ; " " ; bin> make-bin-mirth-arg ;) dup print-ln! run-program drop)
 
-def(build-mirth-bin-gcc, c-source:Str bin:[Str Str] --,
-    Str("gcc" ; " " ; c-source> ; " " ; bin> make-bin-gcc-arg ;) dup print-ln! run-program drop
+def(build-mirth-bin-gcc, compiler-flags:Str linker-flags:Str bin:[Str Str] --,
+    Str("gcc" ; " " ; compiler-flags> ; " " ; " " ; bin> make-bin-gcc-arg ; " " ; linker-flags> ;) dup print-ln! run-program drop
 )
 
 def(main, +World -- +World,
@@ -159,8 +178,10 @@ def(main, +World -- +World,
 
 	    package bin for(>bin dup >packages build-mirth-bin-csrc) drop
 
-	    package c-source map(>Str) unwrap-or("")
-	    package bin for(>bin dup >c-source build-mirth-bin-gcc) drop
+	    package c linker-flags unwrap-or("")
+	    package c compiler-flags unwrap-or("")
+
+	    package bin for(>bin dup2 >compiler-flags >linker-flags build-mirth-bin-gcc) drop2
 	)
     )
 )
