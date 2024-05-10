@@ -1,4 +1,4 @@
-MIRTH_FLAGS=-p std:lib/std/src -p posix:lib/posix/src -p args:lib/args/src -p ini-parser:lib/ini-parser/src -p ansi:lib/ansi/src
+MIRTH_FLAGS=-p std:lib/std/src -p arg-parser:lib/arg-parser/src -p ini-parser:lib/ini-parser/src -p ansi:lib/ansi/src
 
 MIRTH_SRCS=$(shell find src -name "*.mth")
 

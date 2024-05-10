@@ -8,7 +8,7 @@ import(std.maybe)
 import(std.list)
 import(std.either)
 
-import(posix.posix)
+import(std.posix)
 
 import(ini-parser.parser)
 
@@ -29,11 +29,11 @@ def(meta-parsefn,
     error:Maybe(mirth-build.main.Error),
 
     name> match(
-        SOME -> dup "name" == if(
-	    drop value> data> name! >data NONE, 
-	    UnknownKey SOME value> drop 
+        Some -> dup "name" == if(
+	    drop value> data> name! >data None, 
+	    UnknownKey Some value> drop 
 	),
-	NONE -> value> drop NONE
+	None -> value> drop None 
     ) >error
 )
 
@@ -60,8 +60,8 @@ def(do-dependency, name:Str value:Str data:PackageDataBuilder -- data:PackageDat
     data> dependencies(
         dip(
 	    "src" >Path join >path >name
-	        NONE >compiler-flags
-		NONE >linker-flags
+	        None >compiler-flags
+		None >linker-flags
 	    GCCFlags.GCCFlags >c
 	    L0 >dependencies
 	    L0 >bin 
@@ -69,7 +69,7 @@ def(do-dependency, name:Str value:Str data:PackageDataBuilder -- data:PackageDat
 	) cons
     ) >data
 
-    NONE >error
+    None >error
 )
 
 def(dependencies-parsefn, 
@@ -81,12 +81,12 @@ def(dependencies-parsefn,
     error:Maybe(mirth-build.main.Error),
     
     name> match(
-        SOME -> >name 
+        Some -> >name 
 	value> match(
-	    SOME -> >value do-dependency,
-	    NONE -> name> drop mirth-build.main.Error.MissingValue SOME >error
+	    Some -> >value do-dependency,
+	    None -> name> drop mirth-build.main.Error.MissingValue Some >error
 	),
-	NONE -> value> drop NONE >error
+	None -> value> drop None >error
     ))
 
 def(bin-parsefn, 
@@ -98,10 +98,10 @@ def(bin-parsefn,
     error:Maybe(mirth-build.main.Error),
 
     name> match(
-        SOME -> value> match(
-	    SOME -> pack2 data> bin:cons >data NONE >error,
-	    NONE -> drop mirth-build.main.Error.MissingValue SOME >error),
-	NONE -> value> drop NONE >error))
+        Some -> value> match(
+	    Some -> pack2 data> bin:cons >data None >error,
+	    None -> drop mirth-build.main.Error.MissingValue Some >error),
+	None -> value> drop None >error))
 
 def(package-parsefn, 
     data:PackageDataBuilder 
@@ -113,7 +113,7 @@ def(package-parsefn,
     error:Maybe(mirth-build.main.Error),
 
     section> match (
-        SOME -> 
+        Some -> 
 	  dup "package" == if(
 	      meta-parsefn, 
 	      dup "dependencies" == if(
@@ -123,8 +123,8 @@ def(package-parsefn,
 		      dup "c" == if(
 		          c-parsefn,
 			  name> drop value> drop
-		          NONE >error)))) drop,
-	NONE -> name> drop value> drop NONE >error))
+		          None >error)))) drop,
+	None -> name> drop value> drop None >error))
 
 def(c-parsefn, 
     data:PackageDataBuilder 
@@ -135,14 +135,14 @@ def(c-parsefn,
     error:Maybe(mirth-build.main.Error),
 
     name> match(
-        SOME -> dup "linker-flags" == if(
-	    drop value> ^data:c:linker-flags! NONE, 
+        Some -> dup "linker-flags" == if(
+	    drop value> @data:c:linker-flags! None, 
 	    dup "compiler-flags" == if(
-	        drop value> ^data:c:compiler-flags! NONE,
-		UnknownKey SOME value> drop
+	        drop value> @data:c:compiler-flags! None,
+		UnknownKey Some value> drop
 	    )
 	),
-	NONE -> value> drop NONE
+	None -> value> drop None
     ) >error
 )
 
@@ -170,10 +170,10 @@ def(build-mirth-bin-gcc, compiler-flags:Str linker-flags:Str bin:[Str Str] --,
 
 def(main, +World -- +World,
     parse-args drop
-    "mirth-build.ini" >Path PackageDataBuilder.new path(drop "src" >Path SOME) ini-parse(package-parsefn) drop  
+    "mirth-build.ini" >Path PackageDataBuilder.new path(drop "src" >Path Some) ini-parse(package-parsefn) drop  
     build match(
-        LEFT -> show panic!,
-	RIGHT -> \(package ->
+        Left -> show panic!,
+	Right -> \(package ->
 	    package dependencies map(make-cli-package-arg) fold(cat) unwrap-or("") package make-cli-package-arg cat
 
 	    package bin for(>bin dup >packages build-mirth-bin-csrc) drop

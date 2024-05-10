@@ -1,15 +1,3 @@
-[submodule "lib/std"]
-	path = lib/std
-	url = https://git.casuallyblue.dev/mirth/std
-[submodule "lib/ansi"]
-	path = lib/ansi
-	url = https://git.casuallyblue.dev/mirth/ansi
-[submodule "lib/args"]
-	path = lib/args
+[submodule "lib/arg-parser"]
+	path = lib/arg-parser
 	url = https://git.casuallyblue.dev/mirth/args
-[submodule "lib/ini-parser"]
-	path = lib/ini-parser
-	url = https://git.casuallyblue.dev/mirth/ini-parser
-[submodule "lib/posix"]
-	path = lib/posix
-	url = https://git.casuallyblue.dev/mirth/posix

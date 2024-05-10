@@ -5,18 +5,18 @@ import(std.list)
 import(std.maybe)
 import(std.either)
 
-import(posix.posix)
+import(std.posix)
 
-import(args.types)
-import(args.parse)
-import(args.state)
+import(arg-parser.types)
+import(arg-parser.parse)
+import(arg-parser.state)
 
 data(Options,
     Options ->
         command:Maybe(Str))
 
 def(Options.default, -- Options,
-    NONE >command
+    None >command
 
     Options.Options)
 
@@ -28,11 +28,11 @@ def(parse-args, +World -- +World Options,
     Options.default
 
     LIST() >options
-    [ args-parse-fn ] SOME >parser
-    "[command]" SOME >args-doc
+    [ args-parse-fn ] Some >parser
+    "[command]" Some >args-doc
     "Mirth Build Tool" >doc
     ArgumentParser
 
-    args.parse.parse-args match(
-        RIGHT -> ,
-	LEFT -> show panic!))
+    arg-parser.parse.parse-args match(
+        Right -> ,
+	Left -> show panic!))

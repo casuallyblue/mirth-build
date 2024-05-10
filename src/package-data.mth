@@ -37,11 +37,11 @@ data(PackageDataBuilder,
 	bin:List([Str Str]))
 
 def(PackageDataBuilder.new, -- PackageDataBuilder,
-    NONE >name 
+    None >name 
     L0 >dependencies 
-    NONE >path 
-        NONE >linker-flags
-	NONE >compiler-flags
+    None >path 
+        None >linker-flags
+	None >compiler-flags
     GCCFlags.GCCFlags >c
     L0 >bin 
     PackageDataBuilder.PackageDataBuilder)
@@ -49,11 +49,11 @@ def(PackageDataBuilder.new, -- PackageDataBuilder,
 def(PackageDataBuilder.build, PackageDataBuilder -- Either(Error, PackageData),
     \(builder ->
         builder name match(
-            NONE -> MissingName LEFT,
-	    SOME -> drop builder path match(
-	        NONE -> MissingPath LEFT,
-	        SOME -> drop builder /PackageDataBuilder 
-		    name> unwrap >name path> unwrap >path PackageData.PackageData RIGHT
+            None -> MissingName Left,
+	    Some -> drop builder path match(
+	        None -> MissingPath Left,
+	        Some -> drop builder /PackageDataBuilder 
+		    name> unwrap >name path> unwrap >path PackageData.PackageData Right
 	    )
         ) 
     )
