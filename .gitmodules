@@ -1,3 +1,9 @@
 [submodule "lib/arg-parser"]
 	path = lib/arg-parser
 	url = https://git.casuallyblue.dev/mirth/args
+[submodule "lib/ini-parser"]
+	path = lib/ini-parser
+	url = https://git.casuallyblue.dev/mirth/ini-parser
+[submodule "lib/std"]
+	path = lib/std
+	url = https://git.casuallyblue.dev/mirth/std
