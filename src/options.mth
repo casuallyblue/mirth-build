@@ -4,6 +4,7 @@ import(std.prelude)
 import(std.list)
 import(std.maybe)
 import(std.either)
+import(std.str)
 
 import(std.posix)
 
@@ -35,4 +36,4 @@ def(parse-args, +World -- +World Options,
 
     arg-parser.parse.parse-args match(
         Right -> ,
-	Left -> show panic!))
+	Left -> Str(emit;) panic!))

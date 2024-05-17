@@ -7,6 +7,7 @@ import(std.path)
 import(std.maybe)
 import(std.list)
 import(std.either)
+import(std.ctypes)
 
 import(std.posix)
 
@@ -37,15 +38,16 @@ def(meta-parsefn,
     ) >error
 )
 
-def-external(dir_exists, Ptr -- Bool)
+external(
+  file_exists [ CStr -- Bool ]
+  dir_exists [ CStr -- Bool ]
+)
 
 def(dir-exists?, Path -- Bool,
-    >Str with-data-cstr(dir_exists))
-
-def-external(file_exists, Ptr -- Bool)
+    >Str with-cstr(dir_exists))
 
 def(file-exists?, Path -- Bool,
-    >Str with-data-cstr(file_exists))
+    >Str with-cstr(file_exists))
 
 def(pull-git-source, dir:Str url:Str -- Path,
     "build" >Path
@@ -157,9 +159,12 @@ def(make-bin-gcc-arg, [Str Str] -- Str,
     unpack2 drop dup 
     Str("-o bin/" ; ; " bin/" ; ; ".c" ;))
 
-def-external(system, Ptr -- Int)
+external(
+  system [ CStr -- CInt ]
+)
+
 def(run-program, Str -- Int,
-    with-data-cstr(system))
+    with-cstr(system) >Int)
 
 def(build-mirth-bin-csrc, packages:Str bin:[Str Str] --,
     Str("mirth" ; packages> ; " " ; bin> make-bin-mirth-arg ;) dup print-ln! run-program drop)
