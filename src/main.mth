@@ -64,10 +64,10 @@ def file-exists? [Path -- Bool ] { >Str with-cstr(file_exists) }
 
 def pull-git-source [ dir:Str url:Str -- Path ] {
     "build" >Path
-    dir> >Path join dup dir-exists? not if(
-        dup >Str url> Str("git clone " ; ; " " ; ;) run-program drop,	
-	dup >Str url> drop Str("git -C "; ; " pull";) run-program drop
-    )
+    dir> >Path join dup >Str over dip:url> dir-exists? not if(
+        Str("git clone " ; ; " " ; ;),	
+	drop Str("git -C "; ; " pull";)
+    ) run-program drop
 }
 
 def mirth-build-ini-exists? [ Path -- Bool] {

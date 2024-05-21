@@ -28,7 +28,7 @@ def(args-parse-fn, +ArgumentParser(a) a Maybe(Str) ArgpOptionType -- +ArgumentPa
 def(parse-args, +World -- +World Options,
     Options.default
 
-    LIST() >options
+    L0 >options
     [ args-parse-fn ] Some >parser
     "[command]" Some >args-doc
     "Mirth Build Tool" >doc

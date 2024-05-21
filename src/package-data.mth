@@ -46,15 +46,15 @@ def(PackageDataBuilder.new, -- PackageDataBuilder,
     L0 >bin 
     PackageDataBuilder.PackageDataBuilder)
 
-def(PackageDataBuilder.build, PackageDataBuilder -- Either(Error, PackageData),
-    \(builder ->
-        builder name match(
-            None -> MissingName Left,
-	    Some -> drop builder path match(
-	        None -> MissingPath Left,
-	        Some -> drop builder /PackageDataBuilder 
-		    name> unwrap >name path> unwrap >path PackageData.PackageData Right
+def PackageDataBuilder.build [ PackageDataBuilder -- Either(Error, PackageData) ] {
+    >builder
+    @builder name match {
+        None -> MissingName Left,
+        Some -> drop @builder path match(
+	    None -> MissingPath Left,
+	    Some -> drop @builder /PackageDataBuilder 
+		name> unwrap >name path> unwrap >path PackageData.PackageData Right
 	    )
-        ) 
-    )
-)
+    }
+    builder> drop
+}
