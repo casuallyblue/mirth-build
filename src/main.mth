@@ -31,8 +31,8 @@ def(meta-parsefn,
 
     name> match(
         Some -> dup "name" == if(
-	    drop value> data> name! >data None, 
-	    UnknownKey Some value> drop 
+	    drop value> data> name! >data None,
+	    UnknownKey Some value> drop
 	),
 	None -> value> drop None 
     ) >error
@@ -43,20 +43,19 @@ external(
   dir_exists [ CStr -- Bool ]
 )
 
-def(dir-exists?, Path -- Bool,
-    >Str with-cstr(dir_exists))
+def dir-exists? [ Path -- Bool ] { >Str with-cstr(dir_exists) }
 
-def(file-exists?, Path -- Bool,
-    >Str with-cstr(file_exists))
+def file-exists? [Path -- Bool ] { >Str with-cstr(file_exists) }
 
-def(pull-git-source, dir:Str url:Str -- Path,
+def pull-git-source [ dir:Str url:Str -- Path ] {
     "build" >Path
     dir> >Path join dup dir-exists? not if(
         dup >Str url> Str("git clone " ; ; " " ; ;) run-program drop,	
 	url> drop
-    ))
+    )
+}
 
-def(do-dependency, name:Str value:Str data:PackageDataBuilder -- data:PackageDataBuilder error:Maybe(mirth-build.main.Error),
+def do-dependency [ name:Str value:Str data:PackageDataBuilder -- data:PackageDataBuilder error:Maybe(mirth-build.main.Error) ] {
     name> dup >dir value> >url pull-git-source
 
     data> dependencies(
@@ -72,24 +71,26 @@ def(do-dependency, name:Str value:Str data:PackageDataBuilder -- data:PackageDat
     ) >data
 
     None >error
-)
+}
 
-def(dependencies-parsefn, 
+def dependencies-parsefn [ 
     data:PackageDataBuilder 
     name:Maybe(Str)
     value:Maybe(Str)
     --
     data:PackageDataBuilder
-    error:Maybe(mirth-build.main.Error),
-    
-    name> match(
-        Some -> >name 
-	value> match(
-	    Some -> >value do-dependency,
-	    None -> name> drop mirth-build.main.Error.MissingValue Some >error
-	),
-	None -> value> drop None >error
-    ))
+    error:Maybe(mirth-build.main.Error) 
+] {
+    name> match { 
+        { Some -> >name 
+		value> match {
+	    		{ Some -> >value do-dependency }
+	    		{ None -> name> drop mirth-build.main.Error.MissingValue Some >error }
+		}
+	}
+	{ None -> value> drop None >error }
+    }
+}
 
 def(bin-parsefn, 
     data:PackageDataBuilder 
@@ -173,20 +174,21 @@ def(build-mirth-bin-gcc, compiler-flags:Str linker-flags:Str bin:[Str Str] --,
     Str("gcc" ; " " ; compiler-flags> ; " " ; " " ; bin> make-bin-gcc-arg ; " " ; linker-flags> ;) run-program drop
 )
 
-def(main, +World -- +World,
+def main {
     parse-args drop
     "mirth-build.ini" >Path PackageDataBuilder.new path(drop "src" >Path Some) ini-parse(package-parsefn) drop  
-    build match(
+    build match {
         Left -> show panic!,
-	Right -> \(package ->
-	    package dependencies map(make-cli-package-arg) fold(cat) unwrap-or("") package make-cli-package-arg cat
+	Right -> >package 
+	    @package dependencies map(make-cli-package-arg) fold(cat) unwrap-or("") @package make-cli-package-arg cat
 
-	    package bin for(>bin dup >packages build-mirth-bin-csrc) drop
+	    @package bin for(>bin dup >packages build-mirth-bin-csrc) drop
 
-	    package c linker-flags unwrap-or("")
-	    package c compiler-flags unwrap-or("")
+	    @package c linker-flags unwrap-or("")
+	    @package c compiler-flags unwrap-or("")
 
-	    package bin for(>bin dup2 >compiler-flags >linker-flags build-mirth-bin-gcc) drop2
-	)
-    )
-)
+	    @package bin for(>bin dup2 >compiler-flags >linker-flags build-mirth-bin-gcc) drop2
+	    
+	    package> drop
+    }
+}

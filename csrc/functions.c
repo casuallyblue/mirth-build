@@ -4,19 +4,10 @@
 
 int dir_exists(char* path) {
 	DIR* dir = opendir(path);
-	if(dir) {
-		closedir(dir);
-		return 1;
-	}
-
-	return 0;
+	return dir ? (closedir(dir), 1) : 0;
 }
 
 int file_exists(char* path) {
-	if(access(path, F_OK) == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return access(path, F_OK) == 0 ? 1 : 0;
 }
 
