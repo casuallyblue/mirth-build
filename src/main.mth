@@ -66,7 +66,7 @@ def pull-git-source [ dir:Str url:Str -- Path ] {
     "build" >Path
     dir> >Path join dup dir-exists? not if(
         dup >Str url> Str("git clone " ; ; " " ; ;) run-program drop,	
-	url> drop
+	dup >Str url> drop Str("git -C "; ; " pull";) run-program drop
     )
 }
 
