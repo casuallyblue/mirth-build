@@ -36,4 +36,4 @@ def(parse-args, +World -- +World Options,
 
     arg-parser.parse.parse-args match(
         Right -> ,
-	Left -> Str(emit;) panic!))
+	Left -> Str(unpack2 ; emit;) panic!))

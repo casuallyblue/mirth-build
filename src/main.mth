@@ -167,10 +167,10 @@ def(run-program, Str -- Int,
     with-cstr(system) >Int)
 
 def(build-mirth-bin-csrc, packages:Str bin:[Str Str] --,
-    Str("mirth" ; packages> ; " " ; bin> make-bin-mirth-arg ;) dup print-ln! run-program drop)
+    Str("mirth" ; packages> ; " " ; bin> make-bin-mirth-arg ;) run-program drop)
 
 def(build-mirth-bin-gcc, compiler-flags:Str linker-flags:Str bin:[Str Str] --,
-    Str("gcc" ; " " ; compiler-flags> ; " " ; " " ; bin> make-bin-gcc-arg ; " " ; linker-flags> ;) dup print-ln! run-program drop
+    Str("gcc" ; " " ; compiler-flags> ; " " ; " " ; bin> make-bin-gcc-arg ; " " ; linker-flags> ;) run-program drop
 )
 
 def(main, +World -- +World,
