@@ -39,8 +39,23 @@ def(meta-parsefn,
 )
 
 external(
-  file_exists [ CStr -- Bool ]
-  dir_exists [ CStr -- Bool ]
+    "#include<dirent.h>"
+    "#include<sys/wait.h>"
+
+    "int access(const char *pathname, int mode);"
+
+    "_Bool dir_exists(const char* path) {"
+    "    DIR* dir = opendir(path);"
+    "    return dir ? (closedir(dir), 1) : 0;"
+    "}"
+
+    dir_exists [ CStr -- Bool ]
+
+    "_Bool file_exists(const char* path) {"
+    "    return access(path, 0) == 0 ? 1 : 0;"
+    "}"
+
+    file_exists [ CStr -- Bool ]
 )
 
 def dir-exists? [ Path -- Bool ] { >Str with-cstr(dir_exists) }
@@ -55,12 +70,17 @@ def pull-git-source [ dir:Str url:Str -- Path ] {
     )
 }
 
+def mirth-build-ini-exists? [ Path -- Bool] {
+	"mirth-build.ini" >Path join file-exists?
+}
+
 def do-dependency [ name:Str value:Str data:PackageDataBuilder -- data:PackageDataBuilder error:Maybe(mirth-build.main.Error) ] {
     name> dup >dir value> >url pull-git-source
 
     data> dependencies(
         dip(
-	    "src" >Path join >path >name
+	    dup mirth-build-ini-exists? then("src" >Path join)
+	    >path >name
 	        None >compiler-flags
 		None >linker-flags
 	    GCCFlags.GCCFlags >c
